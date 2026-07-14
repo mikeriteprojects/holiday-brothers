@@ -3,25 +3,215 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Backgrounds */
+  --bg-deep: #241610;
+  --bg-deep-2: #2e1c13;
+
+  /* Neutral / glass surfaces */
+  --panel-glass: rgba(255, 224, 189, 0.06);
+  --panel-glass-strong: rgba(255, 224, 189, 0.1);
+  --panel-border: rgba(244, 196, 138, 0.18);
+  --panel-border-strong: rgba(244, 196, 138, 0.32);
+
+  /* Text (neutral scale, light-on-dark) */
+  --text-cream: #f5ead9;
+  --text-muted: #c9af93;
+  --text-faint: #8c7358;
+
+  /* Primary (amber/gold) */
+  --amber: #d98a3d;
+  --amber-bright: #f2a84e;
+  --gold-rim: #f2c879;
+
+  /* Accent / status */
+  --danger: #d96b4a;
+
+  /* Radius */
+  --radius-lg: 24px;
+  --radius-md: 14px;
+  --radius-sm: 8px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text-cream);
+  background: radial-gradient(ellipse at top, var(--bg-deep-2) 0%, var(--bg-deep) 60%) fixed;
+  font-family: var(--font-manrope), -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--text-cream);
+}
+
+p {
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+}
+
+@layer components {
+  /* Base glass surface — cards, modals, banners */
+  .glass {
+    @apply rounded-lg border;
+    border-color: var(--panel-border);
+    background-color: var(--panel-glass);
+    backdrop-filter: blur(18px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 224, 189, 0.12),
+      inset 0 -12px 24px -16px rgba(0, 0, 0, 0.45),
+      0 18px 40px -12px rgba(0, 0, 0, 0.55);
+  }
+
+  .teaser-card {
+    @apply glass p-[22px] mb-[14px];
+  }
+
+  .eyebrow {
+    @apply font-mono text-[11px] uppercase;
+    letter-spacing: 0.14em;
+    color: var(--amber-bright);
+  }
+
+  .arrow {
+    @apply font-mono;
+    color: var(--amber-bright);
+  }
+
+  /* Primary hero action — grid of glass buttons */
+  .glass-btn {
+    @apply flex flex-col items-center justify-center gap-2 rounded-md border px-5 py-[22px] text-center font-display text-[17px] transition-all duration-150 ease-out;
+    border-color: var(--panel-border);
+    background-image: linear-gradient(
+      160deg,
+      rgba(244, 196, 138, 0.16) 0%,
+      rgba(244, 196, 138, 0.05) 100%
+    );
+    box-shadow:
+      inset 0 1px 0 rgba(255, 224, 189, 0.16),
+      0 10px 24px -10px rgba(0, 0, 0, 0.55);
+  }
+
+  .glass-btn:hover {
+    transform: translateY(-2px);
+    border-color: var(--gold-rim);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 224, 189, 0.22),
+      0 16px 32px -12px rgba(217, 138, 61, 0.35);
+  }
+
+  .glass-btn.primary {
+    border-color: var(--amber-bright);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 224, 189, 0.22),
+      0 16px 32px -12px rgba(217, 138, 61, 0.45);
+  }
+
+  /* Generic inline button */
+  .btn {
+    @apply rounded-sm border px-[22px] py-3 text-[14.5px] font-medium font-body transition-colors duration-150 ease-out;
+    border-color: var(--panel-border);
+    background-color: var(--panel-glass-strong);
+    color: var(--text-cream);
+  }
+
+  .btn:hover:not(:disabled) {
+    border-color: var(--gold-rim);
+  }
+
+  .btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  /* Inputs */
+  .input,
+  select.input,
+  textarea.input {
+    @apply w-full rounded-sm border px-[14px] py-[10px] text-[14.5px] font-body;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-color: var(--panel-border);
+    color: var(--text-cream);
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--amber-bright);
+  }
+
+  /* Multi-step form rows */
+  .step-row {
+    @apply flex items-center justify-between py-2 text-[14px];
+    opacity: 0.55;
+  }
+
+  .step-row .step-value {
+    @apply text-right;
+    color: var(--text-cream);
+  }
+
+  .active-q {
+    @apply glass p-[22px];
+    opacity: 1;
+  }
+
+  .active-q h2 {
+    font-size: 19px;
+  }
+
+  .required-tag {
+    @apply font-mono text-[11px] uppercase;
+    letter-spacing: 0.14em;
+    color: var(--amber-bright);
+  }
+
+  /* Choice pills */
+  .option-grid {
+    @apply grid gap-2;
+  }
+
+  .option-btn {
+    @apply rounded-sm border px-4 py-3 text-left text-[14.5px] font-body transition-colors duration-150 ease-out;
+    background-color: var(--panel-glass);
+    border-color: var(--panel-border);
+    color: var(--text-cream);
+  }
+
+  .option-btn:hover {
+    border-color: var(--gold-rim);
+  }
+
+  .option-btn.selected {
+    border-color: var(--amber-bright);
+    background-color: var(--panel-glass-strong);
   }
 }
