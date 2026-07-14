@@ -11,6 +11,12 @@ import { assetPath } from "@/lib/basePath";
  * Built from plain CSS 3D transforms (perspective + rotateX/Y + translateZ)
  * per layer — no WebGL/Three.js, no AI-generated intermediate photos.
  *
+ * Wall and roof panels use cropped background-image samples of the real
+ * sukkah-day.jpg (its wood siding and schach branches) rather than flat
+ * gradients, so the assembling shape reads as built from the actual
+ * sukkah rather than an abstract box. Positions/sizes below are eyeballed
+ * texture crops, not precise measurements.
+ *
  * Every 3D-positioned piece is a plain <div> carrying a *static* transform;
  * the reveal animation (opacity/scale) lives on a nested <motion.div> with
  * no transform of its own. Framer Motion fully owns the `transform` CSS
@@ -28,6 +34,28 @@ const W = 168; // box width
 const H = 132; // box height
 const D = 150; // box depth
 const POST = 5; // frame line thickness
+
+const WOOD_PHOTO = assetPath("/sukkah-day.jpg");
+
+function woodTexture(position: string, tinted: boolean): CSSProperties {
+  const tint = tinted
+    ? "linear-gradient(160deg, rgba(242,168,78,0.35), rgba(217,138,61,0.12))"
+    : "linear-gradient(160deg, rgba(36,22,16,0.35), rgba(36,22,16,0.15))";
+  return {
+    backgroundImage: `${tint}, url(${WOOD_PHOTO})`,
+    backgroundSize: "auto, 550% 550%",
+    backgroundPosition: `center, ${position}`,
+  };
+}
+
+function schachTexture(position: string): CSSProperties {
+  return {
+    backgroundImage:
+      "linear-gradient(180deg, rgba(36,22,16,0.15), rgba(36,22,16,0.35)), url(" + WOOD_PHOTO + ")",
+    backgroundSize: "auto, 380% 380%",
+    backgroundPosition: `center, ${position}`,
+  };
+}
 
 interface Props {
   stage: 0 | 1 | 2 | 3 | 4;
@@ -152,48 +180,36 @@ export default function SukkahBuildVisual({ stage, className }: Props) {
             </div>
           ))}
 
-          {/* walls: left, right, back */}
+          {/* walls: left, right, back — textured with real wood-siding crops from sukkah-day.jpg */}
           <div style={planeStyle({ axis: "rotateY", deg: -90, push: W / 2, width: D, height: H })}>
             <motion.div
               className="h-full w-full rounded-sm"
+              style={woodTexture("15% 62%", lit)}
               initial={{ opacity: 0 }}
-              animate={{
-                opacity: showWalls ? 0.85 : 0,
-                background: lit
-                  ? "linear-gradient(160deg, rgba(242,168,78,0.4), rgba(217,138,61,0.18))"
-                  : "linear-gradient(160deg, rgba(244,196,138,0.18), rgba(244,196,138,0.06))",
-              }}
+              animate={{ opacity: showWalls ? 0.92 : 0 }}
               transition={{ duration: 0.6 }}
             />
           </div>
           <div style={planeStyle({ axis: "rotateY", deg: 90, push: W / 2, width: D, height: H })}>
             <motion.div
               className="h-full w-full rounded-sm"
+              style={woodTexture("82% 62%", lit)}
               initial={{ opacity: 0 }}
-              animate={{
-                opacity: showWalls ? 0.85 : 0,
-                background: lit
-                  ? "linear-gradient(160deg, rgba(242,168,78,0.4), rgba(217,138,61,0.18))"
-                  : "linear-gradient(160deg, rgba(244,196,138,0.18), rgba(244,196,138,0.06))",
-              }}
+              animate={{ opacity: showWalls ? 0.92 : 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
             />
           </div>
           <div style={planeStyle({ axis: "rotateY", deg: 180, push: D / 2, width: W, height: H })}>
             <motion.div
               className="h-full w-full rounded-sm"
+              style={woodTexture("50% 62%", lit)}
               initial={{ opacity: 0 }}
-              animate={{
-                opacity: showWalls ? 0.85 : 0,
-                background: lit
-                  ? "linear-gradient(160deg, rgba(242,168,78,0.4), rgba(217,138,61,0.18))"
-                  : "linear-gradient(160deg, rgba(244,196,138,0.18), rgba(244,196,138,0.06))",
-              }}
+              animate={{ opacity: showWalls ? 0.92 : 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             />
           </div>
 
-          {/* schach roof, layered as staggered strips across the depth */}
+          {/* schach roof, layered as staggered strips — textured with the real branch/schach crop */}
           {Array.from({ length: ROOF_STRIP_COUNT }).map((_, i) => {
             const stripDepth = D / ROOF_STRIP_COUNT;
             return (
@@ -211,11 +227,11 @@ export default function SukkahBuildVisual({ stage, className }: Props) {
                 <motion.div
                   className="h-full w-full rounded-sm"
                   style={{
-                    background: "linear-gradient(90deg, #4a6741, #6b8f5c)",
+                    ...schachTexture(`${20 + i * 15}% 22%`),
                     rotate: `${(i - (ROOF_STRIP_COUNT - 1) / 2) * 2.5}deg`,
                   }}
                   initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: showRoof ? 0.9 : 0, y: showRoof ? 0 : -8 }}
+                  animate={{ opacity: showRoof ? 0.95 : 0, y: showRoof ? 0 : -8 }}
                   transition={{ duration: 0.4, delay: i * 0.07 }}
                 />
               </div>
