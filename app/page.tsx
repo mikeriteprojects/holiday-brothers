@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import HomeHero from "@/components/home/HomeHero";
-import CloudTransition from "@/components/home/CloudTransition";
 import PamphletSection from "@/components/home/PamphletSection";
 import SiteFooter from "@/components/home/SiteFooter";
 
@@ -14,7 +13,6 @@ export default function Home() {
   return (
     <>
       <HomeHero />
-      <CloudTransition />
       <PamphletSection />
       <SiteFooter />
     </>
