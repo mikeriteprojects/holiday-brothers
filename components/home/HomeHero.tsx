@@ -78,7 +78,7 @@ export default function HomeHero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 + i * 0.1 }}
             >
-              <Link href={cta.href} className={`glass-btn block h-full ${cta.primary ? "primary" : ""}`}>
+              <Link href={cta.href} className={`glass-btn h-full ${cta.primary ? "primary" : ""}`}>
                 <span>{cta.label}</span>
                 <span className="text-[13px] font-body font-normal" style={{ color: "var(--text-faint)" }}>
                   {cta.description}
