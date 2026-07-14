@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import type { CSSProperties } from "react";
+import { assetPath } from "@/lib/basePath";
 
 /**
  * Pseudo-3D sukkah assembling in layers, keyed to booking-stepper progress
@@ -263,7 +264,7 @@ export default function SukkahBuildVisual({ stage, className }: Props) {
         transition={{ duration: 1.4, delay: lit ? 0.5 : 0 }}
       >
         <Image
-          src="/sukkah-night.jpg"
+          src={assetPath("/sukkah-night.jpg")}
           alt="A completed Holiday Brothers sukkah, lit up at night"
           fill
           className="object-cover"

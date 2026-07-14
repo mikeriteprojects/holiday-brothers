@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { assetPath } from "@/lib/basePath";
 
 const CTAS = [
   {
@@ -32,7 +33,7 @@ export default function HomeHero() {
         transition={{ duration: 0.6 }}
       >
         <Link href="/" className="inline-flex flex-col items-center gap-4">
-          <Image src="/logo.png" alt="Holiday Brothers" width={88} height={88} priority />
+          <Image src={assetPath("/logo.png")} alt="Holiday Brothers" width={88} height={88} priority />
           <span className="eyebrow">Holiday Brothers</span>
         </Link>
       </motion.div>
@@ -84,7 +85,7 @@ export default function HomeHero() {
         <div className="glass overflow-hidden">
           <div className="relative aspect-[4/3]">
             <Image
-              src="/sukkah-day.jpg"
+              src={assetPath("/sukkah-day.jpg")}
               alt="A Holiday Brothers sukkah, fully built in daylight"
               fill
               className="object-cover"
@@ -95,7 +96,7 @@ export default function HomeHero() {
         <div className="glass overflow-hidden">
           <div className="relative aspect-[4/3]">
             <Image
-              src="/sukkah-night.jpg"
+              src={assetPath("/sukkah-night.jpg")}
               alt="A Holiday Brothers sukkah, lit up at night"
               fill
               className="object-cover"

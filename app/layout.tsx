@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Manrope, IBM_Plex_Mono } from "next/font/google";
+import { assetPath } from "@/lib/basePath";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
   title: "Holiday Brothers",
   description: "Sukkah building & Jewish holiday services in Rockland County.",
   icons: {
-    icon: "/logo.png",
+    icon: assetPath("/logo.png"),
   },
 };
 
