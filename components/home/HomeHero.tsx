@@ -6,6 +6,7 @@ import Image from "next/image";
 import { motion, useScroll, useTransform, useMotionValueEvent, AnimatePresence } from "framer-motion";
 import { assetPath } from "@/lib/basePath";
 import CloudsLayer from "./CloudsLayer";
+import ScrambleText from "./ScrambleText";
 
 const CTAS = [
   {
@@ -143,9 +144,9 @@ export default function HomeHero() {
               transition={{ duration: 0.5 }}
             >
               <motion.div
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
+                initial={{ opacity: 0, scale: 0.3, y: -30 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ type: "spring", stiffness: 260, damping: 16 }}
               >
                 <Link href="/" className="inline-flex flex-col items-center gap-4">
                   <Image src={assetPath("/logo.png")} alt="Holiday Brothers" width={88} height={88} />
@@ -157,16 +158,16 @@ export default function HomeHero() {
                 className="mt-8 max-w-2xl text-balance"
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
+                transition={{ duration: 0.3, delay: 0.25 }}
               >
-                Sukkahs built right, by people who know your neighborhood.
+                <ScrambleText text="Sukkahs built right, by people who know your neighborhood." play={revealed} />
               </motion.h1>
 
               <motion.p
                 className="mt-4 max-w-xl"
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
+                transition={{ duration: 0.5, delay: 1.6 }}
               >
                 Serving Rockland County with sukkah building and Jewish holiday services — from delivery
                 to teardown, handled by a crew you can trust.
@@ -176,9 +177,9 @@ export default function HomeHero() {
                 {CTAS.map((cta, i) => (
                   <motion.div
                     key={cta.href}
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.4 + i * 0.1 }}
+                    initial={{ opacity: 0, scale: 0.5, y: 16 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 14, delay: 1.85 + i * 0.12 }}
                   >
                     <Link href={cta.href} className={`glass-btn h-full ${cta.primary ? "primary" : ""}`}>
                       <span>{cta.label}</span>
@@ -194,7 +195,7 @@ export default function HomeHero() {
                 className="eyebrow mt-16"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.8 }}
+                transition={{ duration: 0.5, delay: 2.4 }}
               >
                 Rockland County · Est. by the Kurkus family
               </motion.p>
