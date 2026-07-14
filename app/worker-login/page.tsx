@@ -5,8 +5,8 @@ import { assetPath } from "@/lib/basePath";
 import WorkerLoginForm from "@/components/worker/WorkerLoginForm";
 
 export const metadata: Metadata = {
-  title: "Crew Sign In — Holiday Brothers",
-  description: "Sign in to your Holiday Brothers crew account.",
+  title: "Sign In — Holiday Brothers",
+  description: "Sign in to your Holiday Brothers account — client, crew, vendor, or staff.",
 };
 
 export default function WorkerLoginPage() {
@@ -17,7 +17,7 @@ export default function WorkerLoginPage() {
         <span className="eyebrow">Holiday Brothers</span>
       </Link>
 
-      <h1 className="mb-8">Crew sign in</h1>
+      <h1 className="mb-8">Sign in</h1>
 
       <WorkerLoginForm />
     </main>
