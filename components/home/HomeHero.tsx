@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { motion, useScroll, useTransform, useMotionValueEvent, AnimatePresence } from "framer-motion";
 import { assetPath } from "@/lib/basePath";
 import CloudsLayer from "./CloudsLayer";
 
@@ -56,6 +56,14 @@ export default function HomeHero() {
   function handleHotspotClick() {
     if (scrollYProgress.get() > 0.5) setRevealed(true);
   }
+
+  // Scrolling back out of the zoomed-in state hides the revealed content
+  // again. Only fires setRevealed when the value actually flips (React
+  // bails out on a same-value primitive set), so this doesn't re-render on
+  // every scroll tick the way the earlier nearEnd state did.
+  useMotionValueEvent(scrollYProgress, "change", (v) => {
+    if (v < 0.4) setRevealed(false);
+  });
 
   return (
     <div ref={containerRef} className="relative" style={{ height: "230vh" }}>
