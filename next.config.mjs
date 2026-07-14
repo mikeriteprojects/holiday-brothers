@@ -8,6 +8,11 @@ const repoName = "holiday-brothers";
 
 const nextConfig = {
   output: "export",
+  // GitHub Pages needs foo/index.html to serve /foo/ — without this, static
+  // export emits flat foo.html files instead, so every route except "/"
+  // 404s on a direct load/refresh/bookmark (client-side <Link> nav still
+  // worked either way, masking this until testing a fresh page load).
+  trailingSlash: true,
   images: {
     unoptimized: true,
   },
