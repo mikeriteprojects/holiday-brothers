@@ -167,7 +167,7 @@ export default function HomeHero() {
                 className="mt-4 max-w-xl"
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 1.6 }}
+                transition={{ duration: 0.5, delay: 0.75 }}
               >
                 Serving Rockland County with sukkah building and Jewish holiday services — from delivery
                 to teardown, handled by a crew you can trust.
@@ -179,7 +179,7 @@ export default function HomeHero() {
                     key={cta.href}
                     initial={{ opacity: 0, scale: 0.5, y: 16 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 14, delay: 1.85 + i * 0.12 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 14, delay: 0.95 + i * 0.1 }}
                   >
                     <Link href={cta.href} className={`glass-btn h-full ${cta.primary ? "primary" : ""}`}>
                       <span>{cta.label}</span>
@@ -195,7 +195,7 @@ export default function HomeHero() {
                 className="eyebrow mt-16"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 2.4 }}
+                transition={{ duration: 0.5, delay: 1.4 }}
               >
                 Rockland County · Est. by the Kurkus family
               </motion.p>

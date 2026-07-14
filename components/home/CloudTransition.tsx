@@ -3,47 +3,71 @@
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 
-/**
- * Scroll-driven whiteout: a soft cloud mass grows to cover the screen,
- * wiping from the dark hero into the light parchment tone the pamphlet
- * section below uses (#F5EAD9) so the handoff is seamless once this
- * section's sticky viewport releases. No flat background color of its own —
- * it sits over the page's own dark gradient (body background) so there's
- * no hard-edged box before the cloud fills in.
- */
+interface CloudDef {
+  top: string;
+  left: string;
+  size: string;
+  startAt: number;
+}
+
+// Several clouds converging from different positions/timings reads as an
+// actual whiteout sweeping in, rather than one translucent circle sitting
+// on the dark hero background — which just blended into a muddy brown mass
+// instead of looking like cloud.
+const CLOUDS: CloudDef[] = [
+  { top: "10%", left: "10%", size: "55vmax", startAt: 0 },
+  { top: "5%", left: "60%", size: "50vmax", startAt: 0.06 },
+  { top: "45%", left: "-10%", size: "50vmax", startAt: 0.1 },
+  { top: "50%", left: "55%", size: "55vmax", startAt: 0.04 },
+  { top: "25%", left: "30%", size: "45vmax", startAt: 0.14 },
+];
+
 export default function CloudTransition() {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
 
-  const cloudScale = useTransform(scrollYProgress, [0, 0.7], [0.4, 3.4]);
-  const cloudOpacity = useTransform(scrollYProgress, [0, 0.4], [0, 1]);
-  const wipeOpacity = useTransform(scrollYProgress, [0.3, 0.85], [0, 1]);
-  const labelOpacity = useTransform(scrollYProgress, [0.15, 0.35, 0.9], [0, 1, 0]);
+  const labelOpacity = useTransform(scrollYProgress, [0.1, 0.28, 0.55], [0, 1, 0]);
 
   return (
     <div ref={ref} className="relative" style={{ height: "180vh" }}>
       <div className="sticky top-0 flex h-screen items-start justify-center overflow-hidden pt-[18vh]">
-        <motion.div
-          className="absolute rounded-full"
-          style={{
-            top: "20%",
-            width: "60vmax",
-            height: "60vmax",
-            scale: cloudScale,
-            opacity: cloudOpacity,
-            background:
-              "radial-gradient(circle, rgba(245,234,217,0.95) 0%, rgba(245,234,217,0.45) 55%, transparent 75%)",
-            filter: "blur(30px)",
-          }}
-        />
-        <motion.div className="absolute inset-0" style={{ opacity: wipeOpacity, background: "#F5EAD9" }} />
+        {CLOUDS.map((c, i) => (
+          <Cloud key={i} cloud={c} scrollYProgress={scrollYProgress} />
+        ))}
         <motion.p
-          className="relative font-mono text-[11px] uppercase"
+          className="relative z-10 font-mono text-[11px] uppercase"
           style={{ opacity: labelOpacity, color: "var(--amber-bright)", letterSpacing: "0.14em" }}
         >
           Our story
         </motion.p>
       </div>
     </div>
+  );
+}
+
+function Cloud({
+  cloud,
+  scrollYProgress,
+}: {
+  cloud: CloudDef;
+  scrollYProgress: ReturnType<typeof useScroll>["scrollYProgress"];
+}) {
+  const scale = useTransform(scrollYProgress, [cloud.startAt, cloud.startAt + 0.55], [0.15, 1.6]);
+  const opacity = useTransform(scrollYProgress, [cloud.startAt, cloud.startAt + 0.25], [0, 0.98]);
+
+  return (
+    <motion.div
+      className="absolute rounded-full"
+      style={{
+        top: cloud.top,
+        left: cloud.left,
+        width: cloud.size,
+        height: cloud.size,
+        scale,
+        opacity,
+        background: "radial-gradient(circle, #F5EAD9 0%, #F5EAD9 60%, rgba(245,234,217,0) 78%)",
+        filter: "blur(4px)",
+      }}
+    />
   );
 }

@@ -32,7 +32,7 @@ export default function PamphletCard({ pamphlet, index }: { pamphlet: Pamphlet; 
 
   return (
     <motion.div
-      className="cursor-pointer"
+      className="cursor-pointer self-start"
       style={{ rotate: pamphlet.rotate }}
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
