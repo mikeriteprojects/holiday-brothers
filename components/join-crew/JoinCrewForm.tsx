@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { submitCrewApplication, isOk, type CrewApplicationAnswers } from "@/lib/api";
 import OptionGrid from "@/components/booking/OptionGrid";
+import CrewCharacterCard from "@/components/join-crew/CrewCharacterCard";
 
 const CREW_ROLES: CrewApplicationAnswers["crew_role"][] = ["Builder Only", "Builder + Driver", "Driver Only"];
 const DRIVING_SUBTYPES: NonNullable<CrewApplicationAnswers["driving_subtype"]>[] = [
@@ -111,7 +112,8 @@ export default function JoinCrewForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="glass space-y-6 p-6 sm:p-8">
+    <div className="grid items-start gap-8 lg:grid-cols-[1fr_340px]">
+      <form onSubmit={handleSubmit} className="glass space-y-6 p-6 sm:p-8">
       <div>
         <h2 className="mb-4">Your info</h2>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -267,6 +269,25 @@ export default function JoinCrewForm() {
       <button type="submit" className="btn primary" disabled={submitting} style={{ borderColor: "var(--amber-bright)" }}>
         {submitting ? "Submitting…" : "Submit application"}
       </button>
-    </form>
+      </form>
+
+      <CrewCharacterCard
+        className="lg:sticky lg:top-24"
+        name={form.name}
+        age={age}
+        crewRole={form.crew_role}
+        drivingSubtype={form.driving_subtype}
+        needsDriving={needsDriving}
+        school={form.school}
+        priorWork={form.prior_work}
+        transportGuaranteed={form.transport_guaranteed}
+        address={form.address}
+        medicalExperience={form.medical_experience}
+        emergencyContactName={form.emergency_contact_name}
+        guardianContactName={form.guardian_contact_name}
+        needsGuardian={needsGuardian}
+        waiverAccepted={form.waiver_accepted}
+      />
+    </div>
   );
 }
