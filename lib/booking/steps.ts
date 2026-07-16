@@ -38,7 +38,9 @@ export const SPEED_DESCRIPTIONS: Record<(typeof SPEED_OPTIONS)[number], string> 
   Express: "Rushed to the front of the line.",
 };
 
-export function visibleSteps(hasSupplies: boolean | null): StepId[] {
-  if (hasSupplies === true) return STEP_ORDER.filter((s) => s !== "delivery");
-  return STEP_ORDER;
-}
+// Every step in STEP_ORDER is always shown — "delivery" covers both
+// self-delivery of supplies (only relevant when we're the ones delivering
+// them) and crew pickup (relevant regardless of who supplied the
+// materials), so the step itself can't be skipped just because the
+// customer already has supplies; only its self-delivery option is
+// conditional on that (see BookingStepper).

@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState } from "react";
+import { memo, useId, useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import type { CSSProperties } from "react";
@@ -9,27 +9,20 @@ import type { StepId } from "@/lib/booking/steps";
 
 /**
  * Illustrated, per-question companion for the booking stepper. Each step gets
- * its own small scene (dashed "not built yet" outlines, a pile of planks, size
- * silhouettes, pinned type flyers, a live clock, an address pin, a folder or
- * receipt) rather than one generic progress box. Built from plain CSS/SVG —
- * no photoreal 3D asset exists for this, so depth is an illusion via
- * perspective + a slight static rotateX/Y tilt on the "stage", the same
- * technique used elsewhere in this codebase (see the home hero's cloud
- * layer / booking visual's prior iteration).
+ * its own small scene (dashed "not built yet" outlines, a pile of hand-drawn
+ * beams, size silhouettes, pinned type flyers, a live clock, an address pin,
+ * a folder or receipt) rather than one generic progress box. Built from
+ * plain CSS/SVG — no photoreal 3D asset exists for this, and beams are
+ * drawn (gradient + grain-line SVG), not cropped from the real sukkah-day
+ * photo, so the illustration reads as one consistent designed system rather
+ * than photo fragments. Depth is an illusion via perspective + rotateX/Y
+ * tilts, the same technique used elsewhere in this codebase.
  *
  * Hovering the panel replays the current scene's entrance animation: bumping
- * `replayNonce` changes the scene's React key, which remounts it.
+ * `replayNonce` changes the scene's React key, which remounts it. Hovering
+ * an *option* inside the active question (via OptionGrid's onHoverOption)
+ * live-previews that option in the scene before it's actually selected.
  */
-
-const WOOD_PHOTO = assetPath("/sukkah-day.jpg");
-
-function woodTexture(position: string): CSSProperties {
-  return {
-    backgroundImage: `linear-gradient(160deg, rgba(36,22,16,0.3), rgba(36,22,16,0.12)), url(${WOOD_PHOTO})`,
-    backgroundSize: "auto, 480% 480%",
-    backgroundPosition: `center, ${position}`,
-  };
-}
 
 interface Props {
   step: StepId;
@@ -37,12 +30,20 @@ interface Props {
   size: string;
   sukkahType: string;
   speedTier: string;
+  hoveredSupplies: string | null;
+  hoveredSize: string | null;
+  hoveredType: string | null;
   hoveredSpeed: string | null;
   selfDelivery: boolean;
   workerPickup: boolean;
   addressTyped: string;
   addressValid: boolean | null;
   accountMode: "full" | "guest" | null;
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+  phone: string;
   discounts: { label: string; amount: number }[];
   price: number;
   /** True once the booking has actually been submitted — shows the real photo payoff. */
@@ -58,24 +59,67 @@ function Stage({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** A hand-drawn beam: gradient body + wavy grain lines + a knot, all vector — no photo. */
+function Beam({ vertical }: { vertical?: boolean }) {
+  const gradId = useId();
+  const w = vertical ? 20 : 100;
+  const h = vertical ? 100 : 20;
+  const grain = vertical
+    ? [
+        "M4 2 Q2 25 4 50 T4 98",
+        "M10 2 Q12.5 25 10 50 T10 98",
+        "M16 2 Q14 25 16 50 T16 98",
+      ]
+    : [
+        "M2 4 Q25 2 50 4 T98 4",
+        "M2 10 Q25 12.5 50 10 T98 10",
+        "M2 16 Q25 14 50 16 T98 16",
+      ];
+  const knot = vertical ? { cx: 11, cy: 34 } : { cx: 34, cy: 11 };
+  return (
+    <svg
+      viewBox={`0 0 ${w} ${h}`}
+      preserveAspectRatio="none"
+      className="absolute inset-0 h-full w-full"
+    >
+      <defs>
+        <linearGradient id={gradId} x1={vertical ? "0" : "0"} y1="0" x2={vertical ? "1" : "0"} y2={vertical ? "0" : "1"}>
+          <stop offset="0%" stopColor="var(--gold-rim)" />
+          <stop offset="50%" stopColor="var(--amber-bright)" />
+          <stop offset="100%" stopColor="var(--amber)" />
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width={w} height={h} rx="3" fill={`url(#${gradId})`} />
+      {grain.map((d, i) => (
+        <path key={i} d={d} stroke="rgba(36,22,16,0.32)" strokeWidth="0.8" fill="none" strokeLinecap="round" />
+      ))}
+      <circle cx={knot.cx} cy={knot.cy} r="1.8" fill="rgba(36,22,16,0.22)" />
+      <circle cx={knot.cx} cy={knot.cy} r="3.2" fill="none" stroke="rgba(36,22,16,0.16)" strokeWidth="0.5" />
+      <rect x="0.5" y="0.5" width={w - 1} height={h - 1} rx="3" fill="none" stroke="rgba(36,22,16,0.25)" strokeWidth="0.6" />
+    </svg>
+  );
+}
+
 function Plank({ style, delay }: { style: CSSProperties; delay: number }) {
   return (
     <motion.div
       className="absolute rounded-sm"
-      style={{ ...style }}
+      style={style}
       initial={{ opacity: 0, scale: 0.4 }}
-      animate={{ opacity: 0.95, scale: 1 }}
+      animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4, delay, type: "spring", stiffness: 140, damping: 14 }}
-    />
+    >
+      <Beam />
+    </motion.div>
   );
 }
 
 const PLANK_LAYOUT = [
-  { top: 40, left: 20, width: 90, height: 16, rotate: -8, crop: "20% 40%" },
-  { top: 60, left: 60, width: 100, height: 16, rotate: 6, crop: "50% 30%" },
-  { top: 82, left: 30, width: 95, height: 16, rotate: -3, crop: "70% 55%" },
-  { top: 104, left: 70, width: 85, height: 16, rotate: 10, crop: "35% 70%" },
-  { top: 126, left: 45, width: 100, height: 16, rotate: -12, crop: "85% 20%" },
+  { top: 40, left: 20, width: 90, height: 16, rotate: -8 },
+  { top: 60, left: 60, width: 100, height: 16, rotate: 6 },
+  { top: 82, left: 30, width: 95, height: 16, rotate: -3 },
+  { top: 104, left: 70, width: 85, height: 16, rotate: 10 },
+  { top: 126, left: 45, width: 100, height: 16, rotate: -12 },
 ];
 
 function SuppliesScene({ hasSupplies }: { hasSupplies: boolean | null }) {
@@ -109,7 +153,6 @@ function SuppliesScene({ hasSupplies }: { hasSupplies: boolean | null }) {
                 width: p.width,
                 height: p.height,
                 rotate: `${p.rotate}deg`,
-                ...woodTexture(p.crop),
               }}
             />
           ))}
@@ -157,19 +200,23 @@ function SizeScene({ size, hasSupplies }: { size: string; hasSupplies: boolean |
                 {hasSupplies === true && (
                   <>
                     <motion.div
-                      className="absolute rounded-full"
-                      style={{ left: 8, bottom: 4, width: dims.w - 16, height: 6, ...woodTexture("30% 40%") }}
+                      className="absolute"
+                      style={{ left: 8, bottom: 4, width: dims.w - 16, height: 6 }}
                       initial={{ rotateX: 90, opacity: 0 }}
-                      animate={{ rotateX: 0, opacity: 0.95 }}
+                      animate={{ rotateX: 0, opacity: 1 }}
                       transition={{ delay: 0.15 + i * 0.1, type: "spring", stiffness: 130, damping: 12 }}
-                    />
+                    >
+                      <Beam />
+                    </motion.div>
                     <motion.div
-                      className="absolute rounded-full"
-                      style={{ left: 4, top: 6, width: 6, height: dims.h - 12, ...woodTexture("60% 60%") }}
+                      className="absolute"
+                      style={{ left: 4, top: 6, width: 6, height: dims.h - 12 }}
                       initial={{ rotateX: 90, opacity: 0 }}
-                      animate={{ rotateX: 0, opacity: 0.95 }}
+                      animate={{ rotateX: 0, opacity: 1 }}
                       transition={{ delay: 0.3 + i * 0.1, type: "spring", stiffness: 130, damping: 12 }}
-                    />
+                    >
+                      <Beam vertical />
+                    </motion.div>
                   </>
                 )}
               </div>
@@ -244,12 +291,14 @@ function TypeScene({ sukkahType, size, hasSupplies }: { sukkahType: string; size
                   {Array.from({ length: materialCount }).map((_, j) => (
                     <motion.div
                       key={j}
-                      className="rounded-sm"
-                      style={{ width: 6, height: 14 + j * 5, ...woodTexture(`${20 + j * 20}% 40%`) }}
+                      className="relative overflow-hidden rounded-sm"
+                      style={{ width: 6, height: 14 + j * 5 }}
                       initial={{ scaleY: 0 }}
                       animate={{ scaleY: 1 }}
                       transition={{ delay: j * 0.06, duration: 0.3 }}
-                    />
+                    >
+                      <Beam vertical />
+                    </motion.div>
                   ))}
                 </div>
               ) : (
@@ -433,20 +482,117 @@ function PhotoRevealScene() {
   );
 }
 
-function FolderScene() {
+/** Per-type face styling for the 3D sukkah icon — gradients/patterns only, no photos. */
+const TYPE_FACES: Record<string, { front: CSSProperties; side: CSSProperties; roof: CSSProperties }> = {
+  Canvas: {
+    front: {
+      backgroundImage:
+        "repeating-linear-gradient(96deg, rgba(245,234,217,0.95) 0 5px, rgba(217,138,61,0.5) 5px 7px)",
+    },
+    side: {
+      backgroundImage:
+        "repeating-linear-gradient(96deg, rgba(217,138,61,0.7) 0 5px, rgba(36,22,16,0.3) 5px 7px)",
+    },
+    roof: {
+      backgroundImage: "linear-gradient(100deg, rgba(245,234,217,0.95), rgba(217,138,61,0.6))",
+    },
+  },
+  Modular: {
+    front: {
+      backgroundImage:
+        "linear-gradient(160deg, var(--gold-rim), var(--amber)), repeating-linear-gradient(0deg, transparent 0 11px, rgba(36,22,16,0.35) 11px 12px), repeating-linear-gradient(90deg, transparent 0 11px, rgba(36,22,16,0.35) 11px 12px)",
+    },
+    side: {
+      backgroundImage:
+        "linear-gradient(160deg, var(--amber), rgba(36,22,16,0.35)), repeating-linear-gradient(0deg, transparent 0 11px, rgba(36,22,16,0.4) 11px 12px)",
+    },
+    roof: {
+      backgroundImage:
+        "linear-gradient(100deg, var(--gold-rim), var(--amber)), repeating-linear-gradient(45deg, transparent 0 9px, rgba(36,22,16,0.3) 9px 10px)",
+    },
+  },
+  Construction: {
+    front: {
+      backgroundImage:
+        "linear-gradient(160deg, var(--amber-bright), var(--amber)), repeating-linear-gradient(90deg, transparent 0 4px, rgba(36,22,16,0.32) 4px 5px)",
+    },
+    side: {
+      backgroundImage:
+        "linear-gradient(160deg, var(--amber), rgba(36,22,16,0.4)), repeating-linear-gradient(90deg, transparent 0 4px, rgba(36,22,16,0.35) 4px 5px)",
+    },
+    roof: {
+      backgroundImage:
+        "linear-gradient(100deg, var(--amber), rgba(36,22,16,0.45)), repeating-linear-gradient(60deg, transparent 0 4px, rgba(36,22,16,0.35) 4px 5px), repeating-linear-gradient(-60deg, transparent 0 4px, rgba(36,22,16,0.2) 4px 5px)",
+    },
+  },
+};
+
+/** Small CSS-3D sukkah icon (perspective + rotateX/Y), styled per sukkah type. */
+function SukkahTypeIcon3D({ type }: { type: string }) {
+  const faces = TYPE_FACES[type] ?? TYPE_FACES.Canvas;
+  return (
+    <div style={{ perspective: 240 }}>
+      <div
+        className="relative mx-auto"
+        style={{ width: 60, height: 46, transformStyle: "preserve-3d", transform: "rotateX(-16deg) rotateY(-30deg)" }}
+      >
+        <div
+          className="absolute rounded-sm"
+          style={{ width: 40, height: 34, left: 0, top: 10, transform: "translateZ(20px)", ...faces.front }}
+        />
+        <div
+          className="absolute rounded-sm"
+          style={{ width: 34, height: 34, left: 40, top: 10, transformOrigin: "left", transform: "rotateY(90deg)", ...faces.side }}
+        />
+        <div
+          className="absolute rounded-sm"
+          style={{ width: 46, height: 26, left: -6, top: -6, transformOrigin: "top", transform: "rotateX(55deg) translateZ(3px)", ...faces.roof }}
+        />
+      </div>
+    </div>
+  );
+}
+
+interface FolderSceneProps {
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+  phone: string;
+  sukkahType: string;
+}
+
+function FolderScene({ firstName, lastName, username, email, phone, sukkahType }: FolderSceneProps) {
+  const fullName = `${firstName} ${lastName}`.trim();
   return (
     <Stage>
-      <div className="relative" style={{ width: 160, height: 110 }}>
+      <div className="relative" style={{ width: 210, height: 160 }}>
         <div
-          className="absolute inset-0 rounded-sm"
-          style={{ background: "linear-gradient(160deg, var(--amber), var(--amber-bright))", opacity: 0.35 }}
+          className="absolute inset-x-0 bottom-0 rounded-sm"
+          style={{ height: 140, background: "linear-gradient(160deg, var(--amber), var(--amber-bright))", opacity: 0.3 }}
         />
+        {/* paper body — revealed once the lid swings open */}
+        <div
+          className="absolute inset-x-3 bottom-3 overflow-hidden rounded-sm p-3"
+          style={{ top: 16, background: "rgba(245,234,217,0.95)", color: "#241610" }}
+        >
+          <div className="mb-1 flex justify-center">
+            <SukkahTypeIcon3D type={sukkahType} />
+          </div>
+          <div className="space-y-0.5 text-[11px] leading-tight">
+            <div>{fullName || "—"}</div>
+            {username && <div>@{username}</div>}
+            {email && <div className="truncate">{email}</div>}
+            {phone && <div>{phone}</div>}
+          </div>
+        </div>
+        {/* lid — swings open to reveal the paper underneath */}
         <motion.div
           className="absolute inset-x-0 top-0 origin-top rounded-sm"
-          style={{ height: 110, background: "linear-gradient(160deg, var(--gold-rim), var(--amber))" }}
+          style={{ height: 160, background: "linear-gradient(160deg, var(--gold-rim), var(--amber))" }}
           initial={{ rotateX: 0 }}
           animate={{ rotateX: -100 }}
-          transition={{ delay: 0.3, duration: 0.6, ease: "easeInOut" }}
+          transition={{ delay: 0.3, duration: 0.65, ease: "easeInOut" }}
         />
         <span
           className="absolute -bottom-7 left-0 right-0 text-center text-[12.5px]"
@@ -459,14 +605,23 @@ function FolderScene() {
   );
 }
 
-function ReceiptPreviewScene({ discounts, price }: { discounts: { label: string; amount: number }[]; price: number }) {
+interface ReceiptPreviewProps {
+  discounts: { label: string; amount: number }[];
+  price: number;
+  sukkahType: string;
+}
+
+function ReceiptPreviewScene({ discounts, price, sukkahType }: ReceiptPreviewProps) {
   return (
     <Stage>
       <div className="receipt w-[220px]">
-        <p className="text-[11px] uppercase tracking-wide" style={{ color: "var(--amber-bright)" }}>
+        <p className="mb-2 text-[11px] uppercase tracking-wide" style={{ color: "var(--amber-bright)" }}>
           Guest receipt (preview)
         </p>
-        <div className="mt-2 text-[13px]" style={{ color: "var(--text-muted)" }}>
+        <div className="mb-2 flex justify-center">
+          <SukkahTypeIcon3D type={sukkahType} />
+        </div>
+        <div className="text-[13px]" style={{ color: "var(--text-muted)" }}>
           {discounts.map((d) => (
             <div className="flex justify-between" key={d.label}>
               <span>{d.label}</span>
@@ -491,12 +646,18 @@ function SukkahBuildVisual(props: Props) {
 
   function renderScene() {
     switch (props.step) {
-      case "supplies":
-        return <SuppliesScene hasSupplies={props.hasSupplies} />;
-      case "size":
-        return <SizeScene size={props.size} hasSupplies={props.hasSupplies} />;
-      case "type":
-        return <TypeScene sukkahType={props.sukkahType} size={props.size} hasSupplies={props.hasSupplies} />;
+      case "supplies": {
+        const preview = props.hoveredSupplies ? props.hoveredSupplies === "yes" : props.hasSupplies;
+        return <SuppliesScene hasSupplies={preview} />;
+      }
+      case "size": {
+        const preview = props.hoveredSize ?? props.size;
+        return <SizeScene size={preview} hasSupplies={props.hasSupplies} />;
+      }
+      case "type": {
+        const preview = props.hoveredType ?? props.sukkahType;
+        return <TypeScene sukkahType={preview} size={props.size} hasSupplies={props.hasSupplies} />;
+      }
       case "speed":
         return <SpeedScene speedTier={props.speedTier} hoveredSpeed={props.hoveredSpeed} />;
       case "delivery":
@@ -506,9 +667,16 @@ function SukkahBuildVisual(props: Props) {
       case "account":
         if (props.completed) return <PhotoRevealScene />;
         return props.accountMode === "guest" ? (
-          <ReceiptPreviewScene discounts={props.discounts} price={props.price} />
+          <ReceiptPreviewScene discounts={props.discounts} price={props.price} sukkahType={props.sukkahType} />
         ) : (
-          <FolderScene />
+          <FolderScene
+            firstName={props.firstName}
+            lastName={props.lastName}
+            username={props.username}
+            email={props.email}
+            phone={props.phone}
+            sukkahType={props.sukkahType}
+          />
         );
     }
   }

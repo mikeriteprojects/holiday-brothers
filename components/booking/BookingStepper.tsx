@@ -14,12 +14,12 @@ import {
 } from "@/lib/api";
 import {
   STEP_LABELS,
+  STEP_ORDER,
   SIZE_OPTIONS,
   TYPE_OPTIONS,
   TYPE_DESCRIPTIONS,
   SPEED_OPTIONS,
   SPEED_DESCRIPTIONS,
-  visibleSteps,
   type StepId,
 } from "@/lib/booking/steps";
 import OptionGrid from "./OptionGrid";
@@ -110,6 +110,9 @@ export default function BookingStepper() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ booking_code: string; total: number } | null>(null);
+  const [hoveredSupplies, setHoveredSupplies] = useState<string | null>(null);
+  const [hoveredSize, setHoveredSize] = useState<string | null>(null);
+  const [hoveredType, setHoveredType] = useState<string | null>(null);
   const [hoveredSpeed, setHoveredSpeed] = useState<string | null>(null);
   const [addressTyped, setAddressTyped] = useState("");
   const [addressValid, setAddressValid] = useState<boolean | null>(null);
@@ -121,14 +124,17 @@ export default function BookingStepper() {
     });
   }, []);
 
-  const steps = useMemo(() => visibleSteps(answers.has_supplies), [answers.has_supplies]);
+  const steps = STEP_ORDER;
   const currentStep = steps[Math.min(stepIndex, steps.length - 1)];
   const answeredSteps = steps.slice(0, stepIndex);
 
-  // A hover on the speed step only makes sense while that step is active —
-  // otherwise a hover right before advancing can leave a stale preview locked in.
+  // A hover preview only makes sense while its own step is active — otherwise
+  // a hover right before advancing can leave a stale preview locked in.
   useEffect(() => {
-    if (currentStep !== "speed") setHoveredSpeed(null);
+    setHoveredSupplies(null);
+    setHoveredSize(null);
+    setHoveredType(null);
+    setHoveredSpeed(null);
   }, [currentStep]);
 
   const price = useMemo(
@@ -244,12 +250,20 @@ export default function BookingStepper() {
           size={answers.size}
           sukkahType={answers.sukkah_type}
           speedTier={answers.speed_tier}
+          hoveredSupplies={null}
+          hoveredSize={null}
+          hoveredType={null}
           hoveredSpeed={null}
           selfDelivery={answers.self_delivery}
           workerPickup={answers.worker_pickup}
           addressTyped={addressTyped}
           addressValid={addressValid}
           accountMode={answers.accountMode}
+          firstName={answers.firstName}
+          lastName={answers.lastName}
+          username={answers.username}
+          email={answers.email}
+          phone={answers.phone}
           discounts={discounts}
           price={discountedTotal}
           completed
@@ -291,6 +305,7 @@ export default function BookingStepper() {
               <OptionGrid
                 value={answers.has_supplies === null ? null : answers.has_supplies ? "yes" : "no"}
                 onSelect={(v) => selectAndAdvance({ has_supplies: v === "yes" })}
+                onHoverOption={setHoveredSupplies}
                 options={[
                   { value: "no", label: "No, I need supplies", description: "We'll source and deliver everything." },
                   { value: "yes", label: "Yes, I have supplies", description: "Just need the crew to build." },
@@ -302,6 +317,7 @@ export default function BookingStepper() {
               <OptionGrid
                 value={answers.size}
                 onSelect={(v) => selectAndAdvance({ size: v })}
+                onHoverOption={setHoveredSize}
                 options={SIZE_OPTIONS.map((s) => ({ value: s, label: s }))}
               />
             )}
@@ -310,6 +326,7 @@ export default function BookingStepper() {
               <OptionGrid
                 value={answers.sukkah_type}
                 onSelect={(v) => selectAndAdvance({ sukkah_type: v })}
+                onHoverOption={setHoveredType}
                 options={TYPE_OPTIONS.map((t) => ({ value: t, label: t, description: TYPE_DESCRIPTIONS[t] }))}
               />
             )}
@@ -326,18 +343,20 @@ export default function BookingStepper() {
             {currentStep === "delivery" && (
               <div>
                 <div className="option-grid">
-                  <button
-                    type="button"
-                    className={`option-btn ${answers.self_delivery ? "selected" : ""}`}
-                    onClick={() => setAnswers((a) => ({ ...a, self_delivery: !a.self_delivery }))}
-                  >
-                    <div className="font-medium">
-                      Self-deliver &amp; save{selfDeliveryDiscount ? ` $${selfDeliveryDiscount}` : ""}
-                    </div>
-                    <div className="mt-0.5 text-[13px]" style={{ color: "var(--text-faint)" }}>
-                      You pick up the supplies yourself.
-                    </div>
-                  </button>
+                  {!answers.has_supplies && (
+                    <button
+                      type="button"
+                      className={`option-btn ${answers.self_delivery ? "selected" : ""}`}
+                      onClick={() => setAnswers((a) => ({ ...a, self_delivery: !a.self_delivery }))}
+                    >
+                      <div className="font-medium">
+                        Self-deliver &amp; save{selfDeliveryDiscount ? ` $${selfDeliveryDiscount}` : ""}
+                      </div>
+                      <div className="mt-0.5 text-[13px]" style={{ color: "var(--text-faint)" }}>
+                        You pick up the supplies yourself.
+                      </div>
+                    </button>
+                  )}
                   <button
                     type="button"
                     className={`option-btn ${answers.worker_pickup ? "selected" : ""}`}
@@ -495,12 +514,20 @@ export default function BookingStepper() {
           size={answers.size}
           sukkahType={answers.sukkah_type}
           speedTier={answers.speed_tier}
+          hoveredSupplies={hoveredSupplies}
+          hoveredSize={hoveredSize}
+          hoveredType={hoveredType}
           hoveredSpeed={hoveredSpeed}
           selfDelivery={answers.self_delivery}
           workerPickup={answers.worker_pickup}
           addressTyped={addressTyped}
           addressValid={addressValid}
           accountMode={answers.accountMode}
+          firstName={answers.firstName}
+          lastName={answers.lastName}
+          username={answers.username}
+          email={answers.email}
+          phone={answers.phone}
           discounts={discounts}
           price={discountedTotal}
         />
