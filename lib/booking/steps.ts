@@ -42,24 +42,3 @@ export function visibleSteps(hasSupplies: boolean | null): StepId[] {
   if (hasSupplies === true) return STEP_ORDER.filter((s) => s !== "delivery");
   return STEP_ORDER;
 }
-
-/**
- * Maps the current step to one of 5 build stages driving
- * SukkahBuildVisual: 0 bare frame, 1 walls, 2 roof, 3 interior, 4 lit/reveal.
- */
-export function stageForStep(step: StepId): 0 | 1 | 2 | 3 | 4 {
-  switch (step) {
-    case "supplies":
-    case "size":
-      return 0;
-    case "type":
-      return 1;
-    case "speed":
-      return 2;
-    case "delivery":
-    case "address":
-      return 3;
-    case "account":
-      return 4;
-  }
-}

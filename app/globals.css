@@ -214,4 +214,65 @@ p {
     border-color: var(--amber-bright);
     background-color: var(--panel-glass-strong);
   }
+
+  /* Booking visual: dashed "not built yet" outline */
+  .beam-outline {
+    border: 2px dashed var(--amber-bright);
+    border-radius: var(--radius-sm);
+    opacity: 0.75;
+  }
+
+  /* Booking visual: pinned flyer card for sukkah types */
+  .flyer-card {
+    @apply rounded-sm border p-3;
+    background: linear-gradient(160deg, rgba(245, 234, 217, 0.1), rgba(245, 234, 217, 0.03));
+    border-color: var(--panel-border);
+    box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.6);
+  }
+
+  .flyer-pin {
+    @apply absolute rounded-full;
+    width: 10px;
+    height: 10px;
+    left: 50%;
+    top: -5px;
+    margin-left: -5px;
+    background: radial-gradient(circle at 35% 30%, var(--gold-rim), var(--amber));
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Booking visual: delivery-speed clock */
+  .clock-face {
+    border: 2px solid var(--panel-border-strong);
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgba(245, 234, 217, 0.05), transparent 70%);
+  }
+
+  /* Guest checkout receipt */
+  .receipt {
+    @apply rounded-sm p-4;
+    font-family: var(--font-ibm-plex-mono), monospace;
+    background: var(--panel-glass-strong);
+    border-top: 2px dashed var(--panel-border-strong);
+    border-bottom: 2px dashed var(--panel-border-strong);
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .receipt,
+  .receipt * {
+    visibility: visible;
+  }
+  .receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  .no-print {
+    display: none !important;
+  }
 }

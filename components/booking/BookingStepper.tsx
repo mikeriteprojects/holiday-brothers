@@ -19,12 +19,36 @@ import {
   TYPE_DESCRIPTIONS,
   SPEED_OPTIONS,
   SPEED_DESCRIPTIONS,
-  stageForStep,
   visibleSteps,
   type StepId,
 } from "@/lib/booking/steps";
 import OptionGrid from "./OptionGrid";
 import SukkahBuildVisual from "./SukkahBuildVisual";
+import AddressLookup, { type AddressFields } from "./AddressLookup";
+import ReceiptPrint from "./ReceiptPrint";
+
+/** Eases a displayed number toward `target` over ~500ms instead of snapping. */
+function useAnimatedNumber(target: number): number {
+  const [displayed, setDisplayed] = useState(target);
+  useEffect(() => {
+    const start = displayed;
+    const delta = target - start;
+    if (delta === 0) return;
+    const duration = 500;
+    const startTime = performance.now();
+    let frame: number;
+    function tick(now: number) {
+      const t = Math.min(1, (now - startTime) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplayed(start + delta * eased);
+      if (t < 1) frame = requestAnimationFrame(tick);
+    }
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target]);
+  return displayed;
+}
 
 interface Answers {
   has_supplies: boolean | null;
@@ -86,6 +110,10 @@ export default function BookingStepper() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ booking_code: string; total: number } | null>(null);
+  const [hoveredSpeed, setHoveredSpeed] = useState<string | null>(null);
+  const [addressTyped, setAddressTyped] = useState("");
+  const [addressValid, setAddressValid] = useState<boolean | null>(null);
+  const [addressFields, setAddressFields] = useState<AddressFields>({ street: "", city: "", state: "", zip: "" });
 
   useEffect(() => {
     getPricing().then((res) => {
@@ -97,6 +125,12 @@ export default function BookingStepper() {
   const currentStep = steps[Math.min(stepIndex, steps.length - 1)];
   const answeredSteps = steps.slice(0, stepIndex);
 
+  // A hover on the speed step only makes sense while that step is active —
+  // otherwise a hover right before advancing can leave a stale preview locked in.
+  useEffect(() => {
+    if (currentStep !== "speed") setHoveredSpeed(null);
+  }, [currentStep]);
+
   const price = useMemo(
     () => calculatePrice(pricingRows, answers.size, answers.sukkah_type, answers.speed_tier),
     [pricingRows, answers.size, answers.sukkah_type, answers.speed_tier]
@@ -105,8 +139,12 @@ export default function BookingStepper() {
   const workerPickupDiscount = getWorkerPickupDiscount(pricingRows);
   const discountedTotal =
     price.total - (answers.self_delivery ? selfDeliveryDiscount : 0) - (answers.worker_pickup ? workerPickupDiscount : 0);
+  const animatedTotal = useAnimatedNumber(discountedTotal);
 
-  const visualStage = result ? 4 : stageForStep(currentStep === "account" ? "address" : currentStep);
+  const discounts = [
+    answers.self_delivery ? { label: "Self-delivery", amount: -selfDeliveryDiscount } : null,
+    answers.worker_pickup ? { label: "Own pickup", amount: -workerPickupDiscount } : null,
+  ].filter((d): d is { label: string; amount: number } => d !== null);
 
   function goNext() {
     setStepIndex((i) => Math.min(i + 1, steps.length - 1));
@@ -161,25 +199,62 @@ export default function BookingStepper() {
   }
 
   if (result) {
+    const isGuest = answers.accountMode === "guest";
     return (
       <div className="grid items-start gap-8 lg:grid-cols-[1fr_340px]">
-        <motion.div
-          className="glass p-8"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <p className="eyebrow mb-3">Job confirmed</p>
-          <h2>You&rsquo;re booked, {answers.firstName || "friend"}.</h2>
-          <p className="mt-3">
-            Confirmation code <span style={{ color: "var(--text-cream)" }}>{result.booking_code}</span>. We&rsquo;ll text
-            or email you as soon as your quote is finalized.
-          </p>
-          <p className="mt-4 text-[15px]" style={{ color: "var(--text-cream)" }}>
-            Estimated total: ${discountedTotal.toFixed(0)}
-          </p>
-        </motion.div>
-        <SukkahBuildVisual stage={4} className="lg:sticky lg:top-24" />
+        {isGuest ? (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <ReceiptPrint
+              bookingCode={result.booking_code}
+              size={answers.size}
+              sukkahType={answers.sukkah_type}
+              speedTier={answers.speed_tier}
+              address={answers.address}
+              lineItems={[
+                { label: "Base", amount: price.base },
+                { label: "Size", amount: price.size_mod },
+                { label: "Type", amount: price.type_mod },
+                { label: "Speed", amount: price.speed_mod },
+                ...discounts,
+              ]}
+              total={discountedTotal}
+            />
+          </motion.div>
+        ) : (
+          <motion.div
+            className="glass p-8"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <p className="eyebrow mb-3">Job confirmed</p>
+            <h2>You&rsquo;re booked, {answers.firstName || "friend"}.</h2>
+            <p className="mt-3">
+              Confirmation code <span style={{ color: "var(--text-cream)" }}>{result.booking_code}</span>. We&rsquo;ll
+              text or email you as soon as your quote is finalized.
+            </p>
+            <p className="mt-4 text-[15px]" style={{ color: "var(--text-cream)" }}>
+              Estimated total: ${discountedTotal.toFixed(0)}
+            </p>
+          </motion.div>
+        )}
+        <SukkahBuildVisual
+          step="account"
+          hasSupplies={answers.has_supplies}
+          size={answers.size}
+          sukkahType={answers.sukkah_type}
+          speedTier={answers.speed_tier}
+          hoveredSpeed={null}
+          selfDelivery={answers.self_delivery}
+          workerPickup={answers.worker_pickup}
+          addressTyped={addressTyped}
+          addressValid={addressValid}
+          accountMode={answers.accountMode}
+          discounts={discounts}
+          price={discountedTotal}
+          completed
+          className="lg:sticky lg:top-24"
+        />
       </div>
     );
   }
@@ -243,6 +318,7 @@ export default function BookingStepper() {
               <OptionGrid
                 value={answers.speed_tier}
                 onSelect={(v) => selectAndAdvance({ speed_tier: v })}
+                onHoverOption={setHoveredSpeed}
                 options={SPEED_OPTIONS.map((s) => ({ value: s, label: s, description: SPEED_DESCRIPTIONS[s] }))}
               />
             )}
@@ -283,12 +359,14 @@ export default function BookingStepper() {
 
             {currentStep === "address" && (
               <div>
-                <textarea
-                  className="input"
-                  rows={3}
-                  placeholder="Full address where the sukkah will be built"
-                  value={answers.address}
-                  onChange={(e) => setAnswers((a) => ({ ...a, address: e.target.value }))}
+                <AddressLookup
+                  initialValue={addressFields}
+                  onChange={(addr, fields) => {
+                    setAnswers((a) => ({ ...a, address: addr }));
+                    setAddressFields(fields);
+                  }}
+                  onTypingChange={setAddressTyped}
+                  onValidityChange={setAddressValid}
                 />
                 <button
                   type="button"
@@ -393,22 +471,40 @@ export default function BookingStepper() {
             )}
           </motion.div>
         </AnimatePresence>
-
-        {answers.size && (
-          <motion.div
-            className="glass mt-4 p-4 text-[14px]"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            <div className="flex justify-between" style={{ color: "var(--text-muted)" }}>
-              <span>Estimated price</span>
-              <span style={{ color: "var(--text-cream)" }}>${discountedTotal.toFixed(0)}</span>
-            </div>
-          </motion.div>
-        )}
       </div>
 
-      <SukkahBuildVisual stage={visualStage} className="lg:sticky lg:top-24" />
+      <div className="lg:sticky lg:top-24">
+        {answers.size && (
+          <motion.div className="glass mb-4 p-4 text-[14px]" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <div className="flex justify-between" style={{ color: "var(--text-muted)" }}>
+              <span>Estimate</span>
+              <span style={{ color: "var(--text-cream)" }}>${animatedTotal.toFixed(0)}</span>
+            </div>
+            {discounts.map((d) => (
+              <div key={d.label} className="mt-1 flex justify-between text-[13px]" style={{ color: "var(--amber-bright)" }}>
+                <span>{d.label}</span>
+                <span>-${Math.abs(d.amount).toFixed(0)}</span>
+              </div>
+            ))}
+          </motion.div>
+        )}
+
+        <SukkahBuildVisual
+          step={currentStep}
+          hasSupplies={answers.has_supplies}
+          size={answers.size}
+          sukkahType={answers.sukkah_type}
+          speedTier={answers.speed_tier}
+          hoveredSpeed={hoveredSpeed}
+          selfDelivery={answers.self_delivery}
+          workerPickup={answers.worker_pickup}
+          addressTyped={addressTyped}
+          addressValid={addressValid}
+          accountMode={answers.accountMode}
+          discounts={discounts}
+          price={discountedTotal}
+        />
+      </div>
     </div>
   );
 }

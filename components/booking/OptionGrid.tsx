@@ -14,9 +14,10 @@ interface Props {
   onSelect: (value: string) => void;
   multiSelect?: boolean;
   selectedValues?: string[];
+  onHoverOption?: (value: string | null) => void;
 }
 
-export default function OptionGrid({ options, value, onSelect, multiSelect, selectedValues }: Props) {
+export default function OptionGrid({ options, value, onSelect, multiSelect, selectedValues, onHoverOption }: Props) {
   return (
     <div className="option-grid">
       {options.map((opt, i) => {
@@ -32,6 +33,8 @@ export default function OptionGrid({ options, value, onSelect, multiSelect, sele
             transition={{ duration: 0.3, delay: i * 0.05 }}
             whileHover={{ y: -1 }}
             whileTap={{ scale: 0.98 }}
+            onHoverStart={() => onHoverOption?.(opt.value)}
+            onHoverEnd={() => onHoverOption?.(null)}
           >
             <div className="font-medium">{opt.label}</div>
             {opt.description && <div className="mt-0.5 text-[13px]" style={{ color: "var(--text-faint)" }}>{opt.description}</div>}
